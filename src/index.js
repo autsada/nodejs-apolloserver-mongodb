@@ -3,15 +3,16 @@ import mongoose from "mongoose"
 
 import server from "./server"
 
-const DB_USER = "autsada"
-const DB_PASSWORD = "DMEAXOEV7gc5JIAZ"
+const DB_USER = "username" // use your mongodb cluster username
+const DB_PASSWORD = "password" // use your mongodb cluster password
 const DB_NAME = "ecommerce"
 const PORT = 4444
 
 const createServer = async () => {
   try {
     await mongoose.connect(
-      `mongodb+srv://${DB_USER}:${DB_PASSWORD}@graphql-basic-o1icg.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`,
+      // replace 'url' with your mongodb url
+      `mongodb+srv://${DB_USER}:${DB_PASSWORD}@url.net/${DB_NAME}?retryWrites=true&w=majority`,
       { useUnifiedTopology: true }
     )
 
