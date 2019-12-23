@@ -1,18 +1,16 @@
+import dotenv from "dotenv"
+dotenv.config()
 import express from "express"
 import mongoose from "mongoose"
 
 import server from "./server"
 
-const DB_USER = "username" // use your mongodb cluster username
-const DB_PASSWORD = "password" // use your mongodb cluster password
-const DB_NAME = "ecommerce"
-const PORT = 4444
+const { DB_USER, DB_PASSWORD, DB_NAME, PORT } = process.env
 
 const createServer = async () => {
   try {
     await mongoose.connect(
-      // replace 'url' with your mongodb url
-      `mongodb+srv://${DB_USER}:${DB_PASSWORD}@url.net/${DB_NAME}?retryWrites=true&w=majority`,
+      `mongodb+srv://${DB_USER}:${DB_PASSWORD}@graphql-basic-o1icg.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`,
       { useUnifiedTopology: true }
     )
 
