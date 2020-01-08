@@ -13,6 +13,7 @@ type Mutation {
     price: Float!
     imageUrl: String!
   ): Product!
+  addToCart(id: ID!): CartItem!
 }
 
 scalar Date

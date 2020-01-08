@@ -4,15 +4,19 @@ import Product from "../models/product"
 const Query = {
   // me: (parent, args, context, info) => me,
   user: (parent, args, context, info) =>
-    User.findById(args.id).populate({
-      path: "products",
-      populate: { path: "user" }
-    }),
+    User.findById(args.id)
+      .populate({
+        path: "products",
+        populate: { path: "user" }
+      })
+      .populate({ path: "carts", populate: { path: "product" } }),
   users: (parent, args, context, info) =>
-    User.find({}).populate({
-      path: "products",
-      populate: { path: "user" }
-    }),
+    User.find({})
+      .populate({
+        path: "products",
+        populate: { path: "user" }
+      })
+      .populate({ path: "carts", populate: { path: "product" } }),
   product: (parent, args, context, info) =>
     Product.findById(args.id).populate({
       path: "user",
