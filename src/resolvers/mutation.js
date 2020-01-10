@@ -50,6 +50,36 @@ const Mutation = {
       populate: { path: "products" }
     })
   },
+  updateProduct: async (parent, args, context, info) => {
+    const { id, description, price, imageUrl } = args
+
+    // TODO: Check if user logged in
+
+    // Find product in database
+    const product = await Product.findById(id)
+
+    // TODO: Check if user is the owner of the product
+    const userId = "5e132cabae30211b84ad5d4f"
+
+    if (userId !== product.user.toString()) {
+      throw new Error("You are not authorized.")
+    }
+
+    // Form updated information
+    const updateInfo = {
+      description: !!description ? description : product.description,
+      price: !!price ? price : product.price,
+      imageUrl: !!imageUrl ? imageUrl : product.imageUrl
+    }
+
+    // Update product in database
+    await Product.findByIdAndUpdate(id, updateInfo)
+
+    // Find the updated Product
+    const updatedProduct = await Product.findById(id).populate({ path: "user" })
+
+    return updatedProduct
+  },
   addToCart: async (parent, args, context, info) => {
     // id --> productId
     const { id } = args
