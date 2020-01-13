@@ -139,6 +139,36 @@ const Mutation = {
     } catch (error) {
       console.log(error)
     }
+  },
+  deleteCart: async (parent, args, context, info) => {
+    const { id } = args
+
+    // Find cart from given id
+    const cart = await CartItem.findById(id)
+
+    // TODO: Check if user logged in
+
+    // TODO: user id from request --> Find user
+    const userId = "5e15cb313cc0bd1270a2180d"
+
+    const user = await User.findById(userId)
+
+    // Check ownership of the cart
+    if (cart.user.toString() !== userId) {
+      throw new Error("Not authorized.")
+    }
+
+    // Delete cart
+    const deletedCart = await CartItem.findOneAndRemove(id)
+
+    // Update user's carts
+    const updatedUserCarts = user.carts.filter(
+      cartId => cartId.toString() !== deletedCart.id.toString()
+    )
+
+    await User.findByIdAndUpdate(userId, { carts: updatedUserCarts })
+
+    return deletedCart
   }
 }
 
