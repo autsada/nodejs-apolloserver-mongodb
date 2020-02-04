@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
 
 import User from "../models/user"
 import Product from "../models/product"
@@ -26,6 +27,30 @@ const Mutation = {
     const password = await bcrypt.hash(args.password, 10)
 
     return User.create({ ...args, email, password })
+  },
+  login: async (parent, args, context, info) => {
+    const { email, password } = args
+
+    // Find user in database
+    const user = await User.findOne({ email })
+      .populate({
+        path: "products",
+        populate: { path: "user" }
+      })
+      .populate({ path: "carts", populate: { path: "product" } })
+
+    if (!user) throw new Error("Email not found, please sign up.")
+
+    // Check if password is correct
+    const validPassword = await bcrypt.compare(password, user.password)
+
+    if (!validPassword) throw new Error("Invalid email or password.")
+
+    const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
+      expiresIn: "7days"
+    })
+
+    return { user, jwt: token }
   },
   createProduct: async (parent, args, { userId }, info) => {
     // const userId = "5e132cabae30211b84ad5d4f"

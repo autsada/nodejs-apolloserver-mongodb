@@ -1,29 +1,7 @@
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
-
 import User from "../models/user"
 import Product from "../models/product"
 
 const Query = {
-  login: async (parent, args, context, info) => {
-    const { email, password } = args
-
-    // Find user in database
-    const user = await User.findOne({ email })
-
-    if (!user) throw new Error("Email not found, please sign up.")
-
-    // Check if password is correct
-    const validPassword = await bcrypt.compare(password, user.password)
-
-    if (!validPassword) throw new Error("Invalid email or password.")
-
-    const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
-      expiresIn: "7days"
-    })
-
-    return { userId: user.id, jwt: token }
-  },
   user: (parent, args, { userId }, info) => {
     // Check if user logged in
     if (!userId) throw new Error("Please log in")
@@ -50,10 +28,12 @@ const Query = {
       populate: { path: "products" }
     }),
   products: (parent, args, context, info) =>
-    Product.find().populate({
-      path: "user",
-      populate: { path: "products" }
-    })
+    Product.find()
+      .populate({
+        path: "user",
+        populate: { path: "products" }
+      })
+      .sort({ createdAt: "desc" })
 }
 
 export default Query

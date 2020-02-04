@@ -1,5 +1,4 @@
 type Query {
-  login(email: String!, password: String!): AuthData
   user(id: ID!): User
   users: [User]!
   product(id: ID!): Product
@@ -8,6 +7,7 @@ type Query {
 
 type Mutation {
   signup(name: String!, email: String!, password: String!): User
+  login(email: String!, password: String!): AuthData
   createProduct(
     description: String!
     price: Float!
@@ -53,6 +53,6 @@ type CartItem {
 }
 
 type AuthData {
-  userId: ID
+  user: User
   jwt: String
 }
