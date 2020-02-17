@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import sgMail from "@sendgrid/mail"
 
 import User from "../models/user"
 import Product from "../models/product"
@@ -71,6 +72,21 @@ const Mutation = {
     })
 
     // 5. Send link for set password to user email
+    sgMail.setApiKey(process.env.EMAIL_API_KEY)
+
+    const message = {
+      from: "graphql_basic@test.com",
+      to: user.email,
+      subject: "Reset password link",
+      html: `
+        <div>
+          <p>Please click the link below to reset your password.</p> \n\n
+          <a href='http://localhost:3000/signin/resetpassword?resetToken=${resetPasswordToken}' target='blank' style={{color: 'blue'}}>Click to reset your password</a>
+        </div>
+      `
+    }
+
+    sgMail.send(message)
 
     // 6. Return message to frontend
     return { message: "Please check your email to proceed reset password." }
