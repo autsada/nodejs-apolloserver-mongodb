@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
@@ -51,6 +52,28 @@ const Mutation = {
     })
 
     return { user, jwt: token }
+  },
+  requestResetPassword: async (parent, { email }, context, info) => {
+    // 1. Find user in database by email
+    const user = await User.findOne({ email })
+
+    // 2. If no user found, throw error
+    if (!user) throw new Error("Email not found, please sign up instead.")
+
+    // 3. Create resetPasswordToken and resetTokenExpiry
+    const resetPasswordToken = randomBytes(32).toString("hex")
+    const resetTokenExpiry = Date.now() + 30 * 60 * 10
+
+    // 4. Update user (save reset token and token expiry)
+    await User.findByIdAndUpdate(user.id, {
+      resetPasswordToken,
+      resetTokenExpiry
+    })
+
+    // 5. Send link for set password to user email
+
+    // 6. Return message to frontend
+    return { message: "Please check your email to proceed reset password." }
   },
   createProduct: async (parent, args, { userId }, info) => {
     // const userId = "5e132cabae30211b84ad5d4f"
