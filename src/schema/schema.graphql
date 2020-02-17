@@ -9,6 +9,7 @@ type Mutation {
   signup(name: String!, email: String!, password: String!): User
   login(email: String!, password: String!): AuthData
   requestResetPassword(email: String!): Message!
+  resetPassword(password: String!, token: String!): Message
   createProduct(
     description: String!
     price: Float!

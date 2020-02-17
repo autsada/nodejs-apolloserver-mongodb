@@ -63,7 +63,7 @@ const Mutation = {
 
     // 3. Create resetPasswordToken and resetTokenExpiry
     const resetPasswordToken = randomBytes(32).toString("hex")
-    const resetTokenExpiry = Date.now() + 30 * 60 * 10
+    const resetTokenExpiry = Date.now() + 30 * 60 * 1000
 
     // 4. Update user (save reset token and token expiry)
     await User.findByIdAndUpdate(user.id, {
@@ -90,6 +90,34 @@ const Mutation = {
 
     // 6. Return message to frontend
     return { message: "Please check your email to proceed reset password." }
+  },
+  resetPassword: async (parent, { password, token }, context, info) => {
+    // Find user in database by reset token
+    const user = await User.findOne({ resetPasswordToken: token })
+
+    // If no user found throw error
+    if (!user) throw new Error("Invalid token, cannot reset password.")
+
+    // Check if token is expired
+    const isTokenExpired = user.resetTokenExpiry < Date.now()
+
+    // If token is expired throw error
+    if (isTokenExpired) throw new Error("Invalid token, cannot reset password.")
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Update user in database (save new hashed password, delete reset token and token expiry time)
+    await User.findByIdAndUpdate(user.id, {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetTokenExpiry: null
+    })
+
+    // return message
+    return {
+      message: "You have successfully reset your password, please sign in."
+    }
   },
   createProduct: async (parent, args, { userId }, info) => {
     // const userId = "5e132cabae30211b84ad5d4f"
