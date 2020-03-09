@@ -1,11 +1,11 @@
-import { randomBytes } from "crypto"
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
-import sgMail from "@sendgrid/mail"
+import { randomBytes } from 'crypto'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import sgMail from '@sendgrid/mail'
 
-import User from "../models/user"
-import Product from "../models/product"
-import CartItem from "../models/cartItem"
+import User from '../models/user'
+import Product from '../models/product'
+import CartItem from '../models/cartItem'
 
 const Mutation = {
   signup: async (parent, args, context, info) => {
@@ -18,12 +18,12 @@ const Mutation = {
       currentUsers.findIndex(user => user.email === email) > -1
 
     if (isEmailExist) {
-      throw new Error("Email already exist.")
+      throw new Error('Email already exist.')
     }
 
     // Validate password
     if (args.password.trim().length < 6) {
-      throw new Error("Password must be at least 6 characters.")
+      throw new Error('Password must be at least 6 characters.')
     }
 
     const password = await bcrypt.hash(args.password, 10)
@@ -36,20 +36,20 @@ const Mutation = {
     // Find user in database
     const user = await User.findOne({ email })
       .populate({
-        path: "products",
-        populate: { path: "user" }
+        path: 'products',
+        populate: { path: 'user' }
       })
-      .populate({ path: "carts", populate: { path: "product" } })
+      .populate({ path: 'carts', populate: { path: 'product' } })
 
-    if (!user) throw new Error("Email not found, please sign up.")
+    if (!user) throw new Error('Email not found, please sign up.')
 
     // Check if password is correct
     const validPassword = await bcrypt.compare(password, user.password)
 
-    if (!validPassword) throw new Error("Invalid email or password.")
+    if (!validPassword) throw new Error('Invalid email or password.')
 
     const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
-      expiresIn: "7days"
+      expiresIn: '7days'
     })
 
     return { user, jwt: token }
@@ -59,10 +59,10 @@ const Mutation = {
     const user = await User.findOne({ email })
 
     // 2. If no user found, throw error
-    if (!user) throw new Error("Email not found, please sign up instead.")
+    if (!user) throw new Error('Email not found, please sign up instead.')
 
     // 3. Create resetPasswordToken and resetTokenExpiry
-    const resetPasswordToken = randomBytes(32).toString("hex")
+    const resetPasswordToken = randomBytes(32).toString('hex')
     const resetTokenExpiry = Date.now() + 30 * 60 * 1000
 
     // 4. Update user (save reset token and token expiry)
@@ -75,9 +75,9 @@ const Mutation = {
     sgMail.setApiKey(process.env.EMAIL_API_KEY)
 
     const message = {
-      from: "graphql_basic@test.com",
+      from: 'graphql_basic@test.com',
       to: user.email,
-      subject: "Reset password link",
+      subject: 'Reset password link',
       html: `
         <div>
           <p>Please click the link below to reset your password.</p> \n\n
@@ -89,20 +89,20 @@ const Mutation = {
     sgMail.send(message)
 
     // 6. Return message to frontend
-    return { message: "Please check your email to proceed reset password." }
+    return { message: 'Please check your email to proceed reset password.' }
   },
   resetPassword: async (parent, { password, token }, context, info) => {
     // Find user in database by reset token
     const user = await User.findOne({ resetPasswordToken: token })
 
     // If no user found throw error
-    if (!user) throw new Error("Invalid token, cannot reset password.")
+    if (!user) throw new Error('Invalid token, cannot reset password.')
 
     // Check if token is expired
     const isTokenExpired = user.resetTokenExpiry < Date.now()
 
     // If token is expired throw error
-    if (isTokenExpired) throw new Error("Invalid token, cannot reset password.")
+    if (isTokenExpired) throw new Error('Invalid token, cannot reset password.')
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -116,17 +116,17 @@ const Mutation = {
 
     // return message
     return {
-      message: "You have successfully reset your password, please sign in."
+      message: 'You have successfully reset your password, please sign in.'
     }
   },
   createProduct: async (parent, args, { userId }, info) => {
     // const userId = "5e132cabae30211b84ad5d4f"
 
     // Check if user logged in
-    if (!userId) throw new Error("Please log in.")
+    if (!userId) throw new Error('Please log in.')
 
     if (!args.description || !args.price || !args.imageUrl) {
-      throw new Error("Please provide all required fields.")
+      throw new Error('Please provide all required fields.')
     }
 
     const product = await Product.create({ ...args, user: userId })
@@ -141,15 +141,15 @@ const Mutation = {
     await user.save()
 
     return Product.findById(product.id).populate({
-      path: "user",
-      populate: { path: "products" }
+      path: 'user',
+      populate: { path: 'products' }
     })
   },
   updateProduct: async (parent, args, { userId }, info) => {
     const { id, description, price, imageUrl } = args
 
     // TODO: Check if user logged in
-    if (!userId) throw new Error("Please log in.")
+    if (!userId) throw new Error('Please log in.')
 
     // Find product in database
     const product = await Product.findById(id)
@@ -158,7 +158,7 @@ const Mutation = {
     // const userId = "5e132cabae30211b84ad5d4f"
 
     if (userId !== product.user.toString()) {
-      throw new Error("You are not authorized.")
+      throw new Error('You are not authorized.')
     }
 
     // Form updated information
@@ -172,7 +172,7 @@ const Mutation = {
     await Product.findByIdAndUpdate(id, updateInfo)
 
     // Find the updated Product
-    const updatedProduct = await Product.findById(id).populate({ path: "user" })
+    const updatedProduct = await Product.findById(id).populate({ path: 'user' })
 
     return updatedProduct
   },
@@ -180,7 +180,7 @@ const Mutation = {
     // id --> productId
     const { id } = args
 
-    if (!userId) throw new Error("Please log in.")
+    if (!userId) throw new Error('Please log in.')
 
     try {
       // Find user who perform add to cart --> from logged in
@@ -188,8 +188,8 @@ const Mutation = {
 
       // Check if the new addToCart item is already in user.carts
       const user = await User.findById(userId).populate({
-        path: "carts",
-        populate: { path: "product" }
+        path: 'carts',
+        populate: { path: 'product' }
       })
 
       const findCartItemIndex = user.carts.findIndex(
@@ -209,8 +209,8 @@ const Mutation = {
         const updatedCartItem = await CartItem.findById(
           user.carts[findCartItemIndex].id
         )
-          .populate({ path: "product" })
-          .populate({ path: "user" })
+          .populate({ path: 'product' })
+          .populate({ path: 'user' })
 
         return updatedCartItem
       } else {
@@ -224,8 +224,8 @@ const Mutation = {
 
         // B.2 find new cartItem
         const newCartItem = await CartItem.findById(cartItem.id)
-          .populate({ path: "product" })
-          .populate({ path: "user" })
+          .populate({ path: 'product' })
+          .populate({ path: 'user' })
 
         // B.2 Update user.carts
         await User.findByIdAndUpdate(userId, {
@@ -242,7 +242,7 @@ const Mutation = {
     const { id } = args
 
     // TODO: Check if user logged in
-    if (!userId) throw new Error("Please log in.")
+    if (!userId) throw new Error('Please log in.')
 
     // Find cart from given id
     const cart = await CartItem.findById(id)
@@ -254,11 +254,11 @@ const Mutation = {
 
     // Check ownership of the cart
     if (cart.user.toString() !== userId) {
-      throw new Error("Not authorized.")
+      throw new Error('Not authorized.')
     }
 
     // Delete cart
-    const deletedCart = await CartItem.findOneAndRemove(id)
+    const deletedCart = await CartItem.findByIdAndRemove(id)
 
     // Update user's carts
     const updatedUserCarts = user.carts.filter(
