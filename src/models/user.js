@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from 'mongoose'
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -25,13 +25,24 @@ const userSchema = new mongoose.Schema({
   products: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product"
+      ref: 'Product'
     }
   ],
   carts: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "CartItem"
+      ref: 'CartItem'
+    }
+  ],
+  orders: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order'
+    }
+  ],
+  cardIds: [
+    {
+      type: String
     }
   ],
   createdAt: {
@@ -41,6 +52,6 @@ const userSchema = new mongoose.Schema({
   }
 })
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model('User', userSchema)
 
 export default User

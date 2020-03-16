@@ -268,7 +268,8 @@ const Mutation = {
     await User.findByIdAndUpdate(userId, { carts: updatedUserCarts })
 
     return deletedCart
-  }
+  },
+  createOrder: async (parent, { token }, { userId }, info) => {}
 }
 
 export default Mutation
