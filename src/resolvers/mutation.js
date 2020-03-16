@@ -6,6 +6,13 @@ import sgMail from '@sendgrid/mail'
 import User from '../models/user'
 import Product from '../models/product'
 import CartItem from '../models/cartItem'
+import {
+  retrieveCustomer,
+  createCustomer,
+  createCharge
+} from '../utils/omiseUtils'
+import OrderItem from '../models/orderItem'
+import Order from '../models/order'
 
 const Mutation = {
   signup: async (parent, args, context, info) => {
@@ -269,7 +276,63 @@ const Mutation = {
 
     return deletedCart
   },
-  createOrder: async (parent, { token }, { userId }, info) => {}
+  createOrder: async (parent, { amount, token }, { userId }, info) => {
+    // Check if user logged in
+    if (!userId) throw new Error('Please log in.')
+
+    // Query user from the database
+    const user = await User.findById(userId)
+
+    // Create charge with omise
+    let customer = await retrieveCustomer(user.cardItems[0])
+
+    if (!customer) {
+      const newCustomer = await createCustomer(user.email, user.name, token)
+      customer = newCustomer
+    }
+
+    const charge = await createCharge(amount, customer.id)
+
+    if (!charge)
+      throw new Error('Something went wrong with payment, please try again.')
+
+    // Convert cartItem to OrderItem
+    const orderItemArray = user.carts.map(cart =>
+      OrderItem.create({
+        product: cart.product,
+        quanity: cart.quantity,
+        user: cart.user
+      })
+    )
+
+    // Delete cartItem from the database
+    user.carts.map(cart => CartItem.findByIdAndRemove(cart.id))
+
+    // Create order
+
+    const order = await Order.create({
+      user: userId,
+      items: orderItemArray.map(orderItem => orderItem.id)
+    })
+
+    // Update user info in the database
+    await User.findByIdAndUpdate(userId, {
+      cardIds:
+        !user.cardIds || user.cardIds.length === 0
+          ? [customer.id]
+          : [...user.cardIds, customer.id],
+      carts: [],
+      orders:
+        !user.orders || user.orders.length === 0
+          ? [order.id]
+          : [...user.orders, order.id]
+    })
+
+    // return order
+    return (await Order.findById(order.id))
+      .populate({ path: 'user' })
+      .populate({ path: 'items' })
+  }
 }
 
 export default Mutation
