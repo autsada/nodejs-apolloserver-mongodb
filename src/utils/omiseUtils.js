@@ -10,7 +10,7 @@ const omise = OmiseFn({
 export const retrieveCustomer = id => {
   if (!id) return null
 
-  return Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     omise.customers.retrieve(id, function(err, res) {
       if (res) {
         resolve(res)

@@ -287,7 +287,7 @@ const Mutation = {
     })
 
     // Create charge with omise
-    let customer = await retrieveCustomer(user.cards[0] && user.card[0].id)
+    let customer = await retrieveCustomer(user.cards[0] && user.cards[0].id)
 
     if (!customer) {
       const newCustomer = await createCustomer(user.email, user.name, token)
