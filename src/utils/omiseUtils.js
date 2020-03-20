@@ -1,3 +1,5 @@
+import dotenv from 'dotenv'
+dotenv.config()
 import OmiseFn from 'omise'
 
 const omise = OmiseFn({

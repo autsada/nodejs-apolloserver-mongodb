@@ -40,9 +40,16 @@ const userSchema = new mongoose.Schema({
       ref: 'Order'
     }
   ],
-  cardIds: [
+  cards: [
     {
-      type: String
+      id: String,
+      cardInfo: {
+        id: String,
+        expiration_month: Number,
+        expiration_year: Number,
+        brand: String,
+        last_digits: String
+      }
     }
   ],
   createdAt: {

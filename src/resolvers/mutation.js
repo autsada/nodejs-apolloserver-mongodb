@@ -281,14 +281,39 @@ const Mutation = {
     if (!userId) throw new Error('Please log in.')
 
     // Query user from the database
-    const user = await User.findById(userId)
+    const user = await User.findById(userId).populate({
+      path: 'carts',
+      populate: { path: 'product' }
+    })
 
     // Create charge with omise
-    let customer = await retrieveCustomer(user.cardItems[0])
+    let customer = await retrieveCustomer(user.cards[0] && user.card[0].id)
 
     if (!customer) {
       const newCustomer = await createCustomer(user.email, user.name, token)
       customer = newCustomer
+
+      // update user'cards field
+      const {
+        id,
+        expiration_month,
+        expiration_year,
+        brand,
+        last_digits
+      } = newCustomer.cards.data[0]
+
+      user.cards[0] = {
+        id: newCustomer.id,
+        cardInfo: {
+          id,
+          expiration_month,
+          expiration_year,
+          brand,
+          last_digits
+        }
+      }
+
+      await User.findByIdAndUpdate(userId, { cards: user.cards })
     }
 
     const charge = await createCharge(amount, customer.id)
@@ -297,41 +322,45 @@ const Mutation = {
       throw new Error('Something went wrong with payment, please try again.')
 
     // Convert cartItem to OrderItem
-    const orderItemArray = user.carts.map(cart =>
-      OrderItem.create({
-        product: cart.product,
-        quanity: cart.quantity,
-        user: cart.user
-      })
-    )
-
-    // Delete cartItem from the database
-    user.carts.map(cart => CartItem.findByIdAndRemove(cart.id))
+    const convertCartToOrder = async () => {
+      return Promise.all(
+        user.carts.map(cart =>
+          OrderItem.create({
+            product: cart.product,
+            quantity: cart.quantity,
+            user: cart.user
+          })
+        )
+      )
+    }
 
     // Create order
+    const orderItemArray = await convertCartToOrder()
 
     const order = await Order.create({
       user: userId,
       items: orderItemArray.map(orderItem => orderItem.id)
     })
 
+    // Delete cartItem from the database
+    const deleteCartItems = async () => {
+      return Promise.all(
+        user.carts.map(cart => CartItem.findByIdAndRemove(cart.id))
+      )
+    }
+
+    await deleteCartItems()
+
     // Update user info in the database
     await User.findByIdAndUpdate(userId, {
-      cardIds:
-        !user.cardIds || user.cardIds.length === 0
-          ? [customer.id]
-          : [...user.cardIds, customer.id],
       carts: [],
-      orders:
-        !user.orders || user.orders.length === 0
-          ? [order.id]
-          : [...user.orders, order.id]
+      orders: !user.orders ? [order.id] : [...user.orders, order.id]
     })
 
     // return order
-    return (await Order.findById(order.id))
+    return Order.findById(order.id)
       .populate({ path: 'user' })
-      .populate({ path: 'items' })
+      .populate({ path: 'items', populate: { path: 'product' } })
   }
 }
 
