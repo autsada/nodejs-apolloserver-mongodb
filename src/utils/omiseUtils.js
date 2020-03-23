@@ -47,3 +47,18 @@ export const createCharge = (amount, customer) => {
     })
   })
 }
+
+export const createChargeInternetBanking = (amount, source, return_uri) => {
+  return new Promise((resolve, reject) => {
+    omise.charges.create(
+      { amount, currency: 'thb', source, return_uri },
+      function(err, res) {
+        if (res) {
+          resolve(res)
+        } else {
+          resolve(null)
+        }
+      }
+    )
+  })
+}

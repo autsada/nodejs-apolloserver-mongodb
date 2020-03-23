@@ -11,6 +11,9 @@ const orderSchema = new mongoose.Schema({
       ref: 'OrderItem'
     }
   ],
+  authorize_uri: {
+    type: String
+  },
   createdAt: {
     type: Date,
     required: true,

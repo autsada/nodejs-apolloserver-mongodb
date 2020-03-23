@@ -9,7 +9,8 @@ import CartItem from '../models/cartItem'
 import {
   retrieveCustomer,
   createCustomer,
-  createCharge
+  createCharge,
+  createChargeInternetBanking
 } from '../utils/omiseUtils'
 import OrderItem from '../models/orderItem'
 import Order from '../models/order'
@@ -281,7 +282,12 @@ const Mutation = {
 
     return deletedCart
   },
-  createOrder: async (parent, { amount, cardId, token }, { userId }, info) => {
+  createOrder: async (
+    parent,
+    { amount, cardId, token, return_uri },
+    { userId },
+    info
+  ) => {
     // Check if user logged in
     if (!userId) throw new Error('Please log in.')
 
@@ -294,8 +300,8 @@ const Mutation = {
     // Create charge with omise
     let customer
 
-    // User use existing card
-    if (cardId && !token) {
+    // Credit Card: User use existing card
+    if (amount && cardId && !token && !return_uri) {
       const cust = await retrieveCustomer(cardId)
 
       if (!cust) throw new Error('Cannot process payment')
@@ -303,8 +309,8 @@ const Mutation = {
       customer = cust
     }
 
-    // User use new card
-    if (token && !cardId) {
+    // Credit Card: User use new card
+    if (amount && token && !cardId && !return_uri) {
       const newCustomer = await createCustomer(user.email, user.name, token)
 
       if (!newCustomer) throw new Error('Cannot process payment')
@@ -334,7 +340,15 @@ const Mutation = {
       await User.findByIdAndUpdate(userId, { cards: [newCard, ...user.cards] })
     }
 
-    const charge = await createCharge(amount, customer.id)
+    let charge
+
+    if (token && return_uri) {
+      // Internet Banking
+      charge = await createChargeInternetBanking(amount, token, return_uri)
+    } else {
+      // Credit Card
+      charge = await createCharge(amount, customer.id)
+    }
 
     if (!charge)
       throw new Error('Something went wrong with payment, please try again.')
@@ -357,7 +371,8 @@ const Mutation = {
 
     const order = await Order.create({
       user: userId,
-      items: orderItemArray.map(orderItem => orderItem.id)
+      items: orderItemArray.map(orderItem => orderItem.id),
+      authorize_uri: charge.authorize_uri
     })
 
     // Delete cartItem from the database
