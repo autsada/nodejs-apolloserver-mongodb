@@ -47,6 +47,11 @@ const Mutation = {
         populate: { path: 'user' }
       })
       .populate({ path: 'carts', populate: { path: 'product' } })
+      .populate({
+        path: 'orders',
+        options: { sort: { createdAt: 'desc' } },
+        populate: { path: 'items', populate: { path: 'product' } }
+      })
 
     if (!user) throw new Error('Email not found, please sign up.')
 
@@ -276,7 +281,7 @@ const Mutation = {
 
     return deletedCart
   },
-  createOrder: async (parent, { amount, token }, { userId }, info) => {
+  createOrder: async (parent, { amount, cardId, token }, { userId }, info) => {
     // Check if user logged in
     if (!userId) throw new Error('Please log in.')
 
@@ -287,10 +292,23 @@ const Mutation = {
     })
 
     // Create charge with omise
-    let customer = await retrieveCustomer(user.cards[0] && user.cards[0].id)
+    let customer
 
-    if (!customer) {
+    // User use existing card
+    if (cardId && !token) {
+      const cust = await retrieveCustomer(cardId)
+
+      if (!cust) throw new Error('Cannot process payment')
+
+      customer = cust
+    }
+
+    // User use new card
+    if (token && !cardId) {
       const newCustomer = await createCustomer(user.email, user.name, token)
+
+      if (!newCustomer) throw new Error('Cannot process payment')
+
       customer = newCustomer
 
       // update user'cards field
@@ -302,7 +320,7 @@ const Mutation = {
         last_digits
       } = newCustomer.cards.data[0]
 
-      user.cards[0] = {
+      const newCard = {
         id: newCustomer.id,
         cardInfo: {
           id,
@@ -313,7 +331,7 @@ const Mutation = {
         }
       }
 
-      await User.findByIdAndUpdate(userId, { cards: user.cards })
+      await User.findByIdAndUpdate(userId, { cards: [newCard, ...user.cards] })
     }
 
     const charge = await createCharge(amount, customer.id)

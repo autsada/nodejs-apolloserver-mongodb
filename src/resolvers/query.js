@@ -13,6 +13,11 @@ const Query = {
         populate: { path: 'user' }
       })
       .populate({ path: 'carts', populate: { path: 'product' } })
+      .populate({
+        path: 'orders',
+        options: { sort: { createdAt: 'desc' } },
+        populate: { path: 'items', populate: { path: 'product' } }
+      })
   },
   users: (parent, args, context, info) =>
     User.find({})

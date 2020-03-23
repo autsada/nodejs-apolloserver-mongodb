@@ -23,7 +23,7 @@ type Mutation {
   ): Product!
   addToCart(id: ID!): CartItem!
   deleteCart(id: ID!): CartItem!
-  createOrder(amount: Float!, token: String): Order
+  createOrder(amount: Float!, cardId: String, token: String): Order
 }
 
 scalar Date
@@ -35,7 +35,7 @@ type User {
   products: [Product]
   carts: [CartItem]!
   orders: [Order]!
-  cardIds: [String]!
+  cards: [Card]!
   createdAt: Date!
 }
 
@@ -69,6 +69,19 @@ type Order {
   user: User!
   items: [OrderItem!]!
   createdAt: Date!
+}
+
+type Card {
+  id: ID!
+  cardInfo: CardInfo
+}
+
+type CardInfo {
+  id: ID!
+  expiration_month: Int!
+  expiration_year: Int!
+  brand: String!
+  last_digits: String!
 }
 
 type AuthData {
