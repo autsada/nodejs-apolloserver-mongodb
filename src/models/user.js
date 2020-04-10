@@ -3,42 +3,45 @@ import mongoose from 'mongoose'
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
   },
   email: {
     type: String,
     required: true,
     lowercase: true,
-    trim: true
+    trim: true,
   },
   password: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+  },
+  providerId: {
+    type: String,
   },
   resetPasswordToken: {
-    type: String
+    type: String,
   },
   resetTokenExpiry: {
-    type: Number
+    type: Number,
   },
   products: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
-    }
+      ref: 'Product',
+    },
   ],
   carts: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'CartItem'
-    }
+      ref: 'CartItem',
+    },
   ],
   orders: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Order'
-    }
+      ref: 'Order',
+    },
   ],
   cards: [
     {
@@ -48,15 +51,15 @@ const userSchema = new mongoose.Schema({
         expiration_month: Number,
         expiration_year: Number,
         brand: String,
-        last_digits: String
-      }
-    }
+        last_digits: String,
+      },
+    },
   ],
   createdAt: {
     type: Date,
     required: true,
-    default: () => Date.now()
-  }
+    default: () => Date.now(),
+  },
 })
 
 const User = mongoose.model('User', userSchema)

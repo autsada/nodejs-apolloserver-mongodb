@@ -1,11 +1,16 @@
-import dotenv from "dotenv"
+import dotenv from 'dotenv'
 dotenv.config()
-import express from "express"
-import mongoose from "mongoose"
+import express from 'express'
+import mongoose from 'mongoose'
+import passport from 'passport'
 
-import server from "./server"
+import server from './server'
+import { facebookPassportConfig } from './utils/passport'
+import { facebookAuth } from './utils/socialProvidersAuth'
 
 const { DB_USER, DB_PASSWORD, DB_NAME, PORT } = process.env
+
+facebookPassportConfig()
 
 const createServer = async () => {
   try {
@@ -15,6 +20,17 @@ const createServer = async () => {
     )
 
     const app = express()
+
+    app.get('/auth/facebook', passport.authenticate('facebook'))
+
+    app.get(
+      '/auth/facebook/callback',
+      passport.authenticate('facebook', {
+        session: false,
+        failureRedirect: 'http://localhost:3000/signin',
+      }),
+      facebookAuth
+    )
 
     server.applyMiddleware({ app })
 
