@@ -5,12 +5,13 @@ import mongoose from 'mongoose'
 import passport from 'passport'
 
 import server from './server'
-import { facebookPassportConfig } from './utils/passport'
-import { facebookAuth } from './utils/socialProvidersAuth'
+import { facebookPassportConfig, googlePassportConfig } from './utils/passport'
+import { facebookAuth, googleAuth } from './utils/socialProvidersAuth'
 
 const { DB_USER, DB_PASSWORD, DB_NAME, PORT } = process.env
 
 facebookPassportConfig()
+googlePassportConfig()
 
 const createServer = async () => {
   try {
@@ -30,6 +31,20 @@ const createServer = async () => {
         failureRedirect: 'http://localhost:3000/signin',
       }),
       facebookAuth
+    )
+
+    app.get(
+      '/auth/google',
+      passport.authenticate('google', { scope: ['profile', 'email'] })
+    )
+
+    app.get(
+      '/auth/google/callback',
+      passport.authenticate('google', {
+        session: false,
+        failureRedirect: 'http://localhost:3000/signin',
+      }),
+      googleAuth
     )
 
     server.applyMiddleware({ app })
